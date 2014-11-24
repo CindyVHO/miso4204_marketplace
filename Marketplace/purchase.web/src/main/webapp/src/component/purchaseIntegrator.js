@@ -104,6 +104,47 @@ define(['component/addressComponent', 'component/creditCardComponent', 'componen
         
         pay: function(){
             
+            var idBuyer = 0;
+            
+            this.shoppingCartComponent = new shoppingCart();
+            this.shoppingCartComponent.initialize();
+            var shoppingCarts = this.shoppingCartComponent.listComponent.listController.model.attributes.data;
+            
+            var shopCartIdMax = 0;
+            for(var i = 0, l = shoppingCarts.length; i<l; i++){
+                if(shoppingCarts[i].buyerId === idBuyer){
+                    var idShC = shoppingCarts[i].id;
+                    if(idShC > shopCartIdMax){
+                        shopCartIdMax = idShC;
+                    }
+                }
+            }
+
+            this.shoppingCartMasterComponent = new shopMasterCart();
+            //this.shoppingCartMasterComponent.shoppingCartItemComponent.componentController.currentList;
+            
+            var v_productList = records;
+            
+            var products = new Array();
+
+            var v_totalCarrito = 0;
+            var v_totalItem = 0;
+            
+            // Carga el listado de los productos a guardar y 
+            // Calcula el valor y la cantidad totales de productos
+            for (var property in v_productList) {
+                if (v_productList.hasOwnProperty(property)) {
+                    products.push({
+                        unitPrice :v_productList[property].unitPrice,  
+                        quantity :v_productList[property].quantity,  
+                        name :v_productList[property].name,
+                        productId:v_productList[property].productshoppingcartitemId
+                    });
+                    v_totalItem += (v_productList[property].quantity * 1);
+                    v_totalCarrito += (v_productList[property].quantity * v_productList[property].unitPrice);
+                }
+            }
+            
             // Obtenci{on de Fecha
             var today = new Date();
             var dd = today.getDate();
@@ -123,15 +164,15 @@ define(['component/addressComponent', 'component/creditCardComponent', 'componen
                 //id: '',
                 name:'purchase',
                 purchaseDate:today,
-                totalValue:0,
-                totalItems:0,
+                totalValue: v_totalCarrito,
+                totalItems: v_totalItem,
                 points:0,
                 buyerId:0,
                 addressId: this.purchaseIntegrator.selectedAddress.id
             };
-
+            
             var purchaseMaster = {
-                id: 0,
+                id: 0, // EL ID ES calculado automaticamente
                 purchaseEntity: {
                     id: purchase.id,
                     name:  purchase.name,
@@ -142,14 +183,7 @@ define(['component/addressComponent', 'component/creditCardComponent', 'componen
                     buyerId:purchase.buyerId,
                     addressId:purchase.addressId
                 },
-                createpurchaseItem: [
-                    {
-                        unitPrice :0,  
-                        quantity :0,  
-                        name :'purchaseItem',
-                        productId:'' 
-                    }
-                ],
+                createpurchaseItem: JSON.parse(JSON.stringify(products)),
                 createpayment:[{
                         value:purchase.totalValue,
                         tokenBank:'',
@@ -173,7 +207,6 @@ define(['component/addressComponent', 'component/creditCardComponent', 'componen
                 alert('ERROR REALIZANDO LA COMPRA - INTENTE MAS TARDE'); // Continuar con ciclo de compra
                 document.location.href="/purchase.web";
             }, this));
-            
            
         },
         
